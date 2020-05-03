@@ -28,7 +28,8 @@
     "@reason-native/pastel": "*",
     "@reason-native/rely": "*",
     "ocaml": "~4.6.0",
-    "refmterr": "*"
+    "refmterr": "*",
+    "fastreplacestring": "github:IwanKaramazow/FastReplaceString"
   },
   "devDependencies": {
     "@opam/merlin": "*",

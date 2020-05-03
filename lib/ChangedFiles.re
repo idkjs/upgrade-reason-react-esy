@@ -269,9 +269,9 @@ let rec implementionMapStructureItem = (key, mapper, item) =>
             when
               List.length(
                 renderDestruct
-                |> List.filter((({txt}, _)) => {
+                |> List.filter((({txt}, _)) =>
                      txt == Lident("send") || txt == Lident("state")
-                   }),
+                   ),
               )
               == List.length(renderDestruct) => {
             pexp_loc: Location.none,
@@ -389,16 +389,16 @@ let rec implementionMapStructureItem = (key, mapper, item) =>
             when
               List.length(
                 renderDestruct
-                |> List.filter((({txt}, _)) => {
+                |> List.filter((({txt}, _)) =>
                      txt == Lident("send") || txt == Lident("state")
-                   }),
+                   ),
               )
               == List.length(renderDestruct)
               && List.length(
                    didMountDestruct
-                   |> List.filter((({txt}, _)) => {
+                   |> List.filter((({txt}, _)) =>
                         txt == Lident("send") || txt == Lident("state")
-                      }),
+                      ),
                  )
               == List.length(didMountDestruct) => {
             pexp_loc: Location.none,
@@ -1002,7 +1002,7 @@ let rec interfaceMapSignatureItem = (key, mapper, item) =>
           }
         | Ptyp_arrow(Nolabel, arg, coreType) =>
           switch (
-            try(Some(childrenUsageMap.contents |> StringArrayMap.find(key))) {
+            try (Some(childrenUsageMap.contents |> StringArrayMap.find(key))) {
             | _ => None
             }
           ) {
@@ -1227,7 +1227,7 @@ module StringSet = Set.Make(String);
 let read = () => {
   let set = ref(StringSet.empty);
   let rec read = () =>
-    try(
+    try (
       {
         set := set^ |> StringSet.add(stdin |> input_line);
         read();
@@ -1240,10 +1240,11 @@ let read = () => {
 };
 
 let transform = (args, fileName) =>
-  try({
-    let outputDir =
-      args |> Array.exists(item => item == "--demo") ? "output/" : "";
-          let file =
+  try (
+    {
+      let outputDir =
+        args |> Array.exists(item => item == "--demo") ? "output/" : "";
+      let file =
         fileName
         |> {
           Console.log(
@@ -1253,70 +1254,71 @@ let transform = (args, fileName) =>
           );
           Filename.remove_extension;
         };
-    let ic = open_in_bin(file ++ ".re");
-    let lexbuf = Lexing.from_channel(ic);
-    let (ast, comments) =
-      Reason_toolchain.RE.implementation_with_comments(lexbuf);
-    let newAst =
-      implementationRefactorMapper.structure(
-        implementationRefactorMapper,
-        ast,
-      );
-    let newAst =
-      implementationSecondPassRefactorMapper.structure(
-        implementationSecondPassRefactorMapper,
-        newAst,
-      );
-    let target = outputDir ++ file ++ ".re";
-    let oc = open_out_bin(target);
-    if (Sys.file_exists(file ++ ".rei")) {
-      let ic = open_in_bin(file ++ ".rei");
+      let ic = open_in_bin(file ++ ".re");
       let lexbuf = Lexing.from_channel(ic);
       let (ast, comments) =
-        Reason_toolchain.RE.interface_with_comments(lexbuf);
+        Reason_toolchain.RE.implementation_with_comments(lexbuf);
       let newAst =
-        interfaceRefactorMapper.signature(interfaceRefactorMapper, ast);
+        implementationRefactorMapper.structure(
+          implementationRefactorMapper,
+          ast,
+        );
       let newAst =
-        interfaceSecondPassRefactorMapper.signature(
-          interfaceSecondPassRefactorMapper,
+        implementationSecondPassRefactorMapper.structure(
+          implementationSecondPassRefactorMapper,
           newAst,
         );
-      let target = outputDir ++ file ++ ".rei";
+      let target = outputDir ++ file ++ ".re";
       let oc = open_out_bin(target);
+      if (Sys.file_exists(file ++ ".rei")) {
+        let ic = open_in_bin(file ++ ".rei");
+        let lexbuf = Lexing.from_channel(ic);
+        let (ast, comments) =
+          Reason_toolchain.RE.interface_with_comments(lexbuf);
+        let newAst =
+          interfaceRefactorMapper.signature(interfaceRefactorMapper, ast);
+        let newAst =
+          interfaceSecondPassRefactorMapper.signature(
+            interfaceSecondPassRefactorMapper,
+            newAst,
+          );
+        let target = outputDir ++ file ++ ".rei";
+        let oc = open_out_bin(target);
+        let formatter = Format.formatter_of_out_channel(oc);
+        Reason_toolchain.RE.print_interface_with_comments(
+          formatter,
+          (newAst, comments),
+        );
+        Format.print_flush();
+        Console.log(
+          Pastel.(
+            <Pastel>
+              logPrefix
+              <Pastel backgroundColor=Green color=Black> " Done " </Pastel>
+              " "
+              target
+            </Pastel>
+          ),
+        );
+        close_out(oc);
+      };
       let formatter = Format.formatter_of_out_channel(oc);
-      Reason_toolchain.RE.print_interface_with_comments(
+      Reason_toolchain.RE.print_implementation_with_comments(
         formatter,
         (newAst, comments),
       );
       Format.print_flush();
       Console.log(
-        Pastel.(
-          <Pastel>
-            logPrefix
-            <Pastel backgroundColor=Green color=Black> " Done " </Pastel>
-            " "
-            target
-          </Pastel>
-        ),
+        <Pastel>
+          logPrefix
+          <Pastel backgroundColor=Green color=Black> " Done " </Pastel>
+          " "
+          target
+        </Pastel>,
       );
       close_out(oc);
-    };
-    let formatter = Format.formatter_of_out_channel(oc);
-    Reason_toolchain.RE.print_implementation_with_comments(
-      formatter,
-      (newAst, comments),
-    );
-    Format.print_flush();
-    Console.log(
-      <Pastel>
-        logPrefix
-        <Pastel backgroundColor=Green color=Black> " Done " </Pastel>
-        " "
-        target
-      </Pastel>,
-    );
-    close_out(oc);
-  }) {
+    }
+  ) {
   | error =>
     let outputDir =
       args |> Array.exists(item => item == "--demo") ? "output/" : "";
